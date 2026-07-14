@@ -6,9 +6,28 @@ import { useState } from "react";
 import { DiChrome } from "react-icons/di";
 import { BsGithub } from "react-icons/bs";
 import { Eye, EyeOff } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const onSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    // const userData = Object.fromEntries(formData.entries()) as RegisterFormData
+    const userData = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
+    // console.log(userData)
+
+    const { data, error } = await authClient.signIn.email({
+      ...userData
+    })
+    if (data) return redirect('/')
+    if (error) return alert(error?.message)
+  }
 
   return (
     <section className="min-h-screen bg-gray-50 dark:bg-black">
@@ -68,13 +87,14 @@ export default function LoginPage() {
             </div>
 
             {/* Form */}
-            <form className="space-y-5">
+            <form onSubmit={onSubmit} className="space-y-5">
               {/* Email */}
               <div>
                 <label className="mb-2 block text-sm font-medium">Email Address</label>
 
                 <input
                   type="email"
+                  name="email"
                   placeholder="you@example.com"
                   className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-800 dark:bg-zinc-950"
                 />
@@ -86,6 +106,7 @@ export default function LoginPage() {
 
                 <div className="relative">
                   <input
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 outline-none transition focus:border-cyan-500 dark:border-zinc-800 dark:bg-zinc-950"
@@ -114,7 +135,7 @@ export default function LoginPage() {
               </div>
 
               {/* Submit */}
-              <button className="w-full rounded-xl bg-cyan-500 py-3 font-semibold text-white transition hover:bg-cyan-600">
+              <button type="submit" className="w-full rounded-xl bg-cyan-500 py-3 font-semibold text-white transition hover:bg-cyan-600">
                 Sign In
               </button>
             </form>

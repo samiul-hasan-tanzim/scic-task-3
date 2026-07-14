@@ -6,6 +6,8 @@ import React, { useState } from "react";
 import { DiChrome } from "react-icons/di";
 import { BsGithub } from "react-icons/bs";
 import { Eye, EyeOff } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
 
 
 // type RegisterFormData = {
@@ -27,14 +29,12 @@ export default function RegisterPage() {
             email: formData.get("email") as string,
             password: formData.get("password") as string,
         };
-        console.log(userData)
 
-        // const { data, error } = await authClient.signUp.email({
-        //     name: `${userData.first_name} ${userData.last_name}`,
-        //     email: userData.email,
-        //     password: userData.password,
-        //     image: userData.image
-        // })
+        const { data, error } = await authClient.signUp.email({
+            ...userData
+        })
+        if (data) return redirect('/')
+        if (error) return alert(error?.message)
     };
 
 
