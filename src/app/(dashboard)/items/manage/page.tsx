@@ -2,17 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, X, Plus, Eye } from "lucide-react";
 import { POPULAR_TAGS } from "@/lib/constants";
+import { authClient } from "@/lib/auth-client";
 
 export default function ManageItems() {
+  const { data: session } = authClient.useSession();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editItem, setEditItem] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
+  const [urlErrors, setUrlErrors] = useState<string[]>([]);
+
+  const isValidUrl = (url: string) =>
+    url === "" || /^https?:\/\/.+\..+/i.test(url);
 
   const fetchItems = () => {
-    fetch("/api/items")
+    const email = session?.user?.email;
+    if (!email) return;
+    fetch(`/api/items?createdBy=${encodeURIComponent(email)}`)
       .then((res) => res.json())
       .then((data) => {
         setItems(data);
@@ -21,8 +29,8 @@ export default function ManageItems() {
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    if (session) fetchItems();
+  }, [session]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
@@ -34,6 +42,7 @@ export default function ManageItems() {
   };
 
   const openEdit = (item: any) => {
+    const images = item.images?.length ? [...item.images] : item.image ? [item.image] : [""];
     setEditItem(item._id);
     setForm({
       title: item.title,
@@ -41,13 +50,47 @@ export default function ManageItems() {
       fullDescription: item.fullDescription || "",
       price: item.price || "",
       category: item.category || "",
-      image: item.image || "",
+      images,
       tags: [...(item.tags || [])],
     });
+    setUrlErrors(images.map(() => ""));
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const closeEdit = () => {
+    setEditItem(null);
+    setUrlErrors([]);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleImageChange = (index: number, value: string) => {
+    const images = [...form.images];
+    images[index] = value;
+    setForm({ ...form, images });
+
+    const errors = [...urlErrors];
+    if (value && !isValidUrl(value)) {
+      errors[index] = "Enter a valid URL (e.g. https://example.com/image.jpg)";
+    } else {
+      errors[index] = "";
+    }
+    setUrlErrors(errors);
+  };
+
+  const addImage = () => {
+    setForm({ ...form, images: [...form.images, ""] });
+    setUrlErrors([...urlErrors, ""]);
+  };
+
+  const removeImage = (index: number) => {
+    setForm({
+      ...form,
+      images: form.images.filter((_: string, i: number) => i !== index),
+    });
+    setUrlErrors(urlErrors.filter((_: string, i: number) => i !== index));
   };
 
   const toggleEditTag = (tag: string) => {
@@ -60,17 +103,26 @@ export default function ManageItems() {
   };
 
   const saveEdit = async (id: string) => {
+    const cleanImages = form.images.filter(Boolean);
+    for (const url of cleanImages) {
+      if (!isValidUrl(url)) {
+        alert("One or more image URLs are invalid.");
+        return;
+      }
+    }
+
     const res = await fetch(`/api/items/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        images: cleanImages,
         price: parseFloat(form.price) || 0,
       }),
     });
 
     if (res.ok) {
-      setEditItem(null);
+      closeEdit();
       fetchItems();
     } else {
       alert("Failed to update");
@@ -121,128 +173,213 @@ export default function ManageItems() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {items.map((item) => (
-                <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-zinc-950">
+                <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-zinc-900">
+                  <td className="px-6 py-4 font-medium">{item.title}</td>
                   <td className="px-6 py-4">
-                    {editItem === item._id ? (
-                      <input
-                        name="title"
-                        value={form.title}
-                        onChange={handleEditChange}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700 dark:bg-zinc-950"
-                      />
-                    ) : (
-                      <span className="font-medium">{item.title}</span>
-                    )}
+                    <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
+                      {item.category || "General"}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
-                    {editItem === item._id ? (
-                      <select
-                        name="category"
-                        value={form.category}
-                        onChange={handleEditChange}
-                        className="rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700 dark:bg-zinc-950"
-                      >
-                        <option value="">Select</option>
-                        <option value="UI Frameworks">UI Frameworks</option>
-                        <option value="Backend APIs">Backend APIs</option>
-                        <option value="Database Tools">Database Tools</option>
-                        <option value="Cloud Services">Cloud Services</option>
-                      </select>
-                    ) : (
-                      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
-                        {item.category || "General"}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap gap-1">
+                      {(item.tags || []).map((tag: string) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-zinc-800 dark:text-gray-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
-                    {editItem === item._id ? (
-                      <div className="flex flex-wrap gap-1">
-                        {POPULAR_TAGS.map((tag) => {
-                          const active = form.tags.includes(tag);
-                          return (
-                            <button
-                              type="button"
-                              key={tag}
-                              onClick={() => toggleEditTag(tag)}
-                              className={`rounded-full border px-2 py-0.5 text-xs font-medium transition ${
-                                active
-                                  ? "border-cyan-500 bg-cyan-500 text-white"
-                                  : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
-                              }`}
-                            >
-                              {tag}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {(item.tags || []).map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-zinc-800 dark:text-gray-400"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {editItem === item._id ? (
-                      <input
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        value={form.price}
-                        onChange={handleEditChange}
-                        className="w-24 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700 dark:bg-zinc-950"
-                      />
-                    ) : (
-                      <span>${item.price}</span>
-                    )}
-                  </td>
+                  <td className="px-6 py-4">${item.price}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {editItem === item._id ? (
-                        <>
-                          <button
-                            onClick={() => saveEdit(item._id)}
-                            className="rounded-lg bg-cyan-500 px-4 py-2 text-xs font-medium text-white hover:bg-cyan-600"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditItem(null)}
-                            className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-zinc-800"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => openEdit(item)}
-                            className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-zinc-800"
-                            title="Edit"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item._id)}
-                            className="rounded-lg border border-gray-200 p-2 text-red-500 transition hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-900/20"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </>
-                      )}
+                      <Link
+                        href={`/items/${item._id}`}
+                        className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-zinc-800"
+                        title="View"
+                      >
+                        <Eye size={16} />
+                      </Link>
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-zinc-800"
+                        title="Edit"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className="rounded-lg border border-gray-200 p-2 text-red-500 transition hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-900/20"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold">Edit Item</h2>
+              <button
+                onClick={closeEdit}
+                className="rounded-lg p-1 transition hover:bg-gray-100 dark:hover:bg-zinc-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Title</label>
+                <input
+                  name="title"
+                  value={form.title}
+                  onChange={handleEditChange}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Short Description</label>
+                <input
+                  name="shortDescription"
+                  value={form.shortDescription}
+                  onChange={handleEditChange}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Full Description</label>
+                <textarea
+                  name="fullDescription"
+                  rows={3}
+                  value={form.fullDescription}
+                  onChange={handleEditChange}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Price</label>
+                  <input
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    value={form.price}
+                    onChange={handleEditChange}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-950"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Category</label>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleEditChange}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-zinc-700 dark:bg-zinc-950"
+                  >
+                    <option value="">Select</option>
+                    <option value="UI Frameworks">UI Frameworks</option>
+                    <option value="Backend APIs">Backend APIs</option>
+                    <option value="Database Tools">Database Tools</option>
+                    <option value="Cloud Services">Cloud Services</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Image URLs (optional)</label>
+                <div className="space-y-3">
+                  {form.images?.map((url: string, i: number) => (
+                    <div key={i}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={url}
+                          onChange={(e) => handleImageChange(i, e.target.value)}
+                          className={`w-full rounded-xl border bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:bg-zinc-950 ${
+                            urlErrors[i] ? "border-red-500" : "border-gray-200 dark:border-zinc-700"
+                          }`}
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        {form.images.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="rounded-lg p-2 text-red-500 transition hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <X size={18} />
+                          </button>
+                        )}
+                      </div>
+                      {urlErrors[i] && (
+                        <p className="mt-1 text-xs text-red-500">{urlErrors[i]}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addImage}
+                  className="mt-3 flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-500 transition hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-600 dark:hover:border-cyan-500"
+                >
+                  <Plus size={16} />
+                  Add another image
+                </button>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_TAGS.map((tag) => {
+                    const active = form.tags?.includes(tag);
+                    return (
+                      <button
+                        type="button"
+                        key={tag}
+                        onClick={() => toggleEditTag(tag)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                          active
+                            ? "border-cyan-500 bg-cyan-500 text-white"
+                            : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => saveEdit(editItem)}
+                className="flex-1 rounded-xl bg-cyan-500 py-3 font-semibold text-white transition hover:bg-cyan-600"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={closeEdit}
+                className="flex-1 rounded-xl border border-gray-200 py-3 font-semibold transition hover:bg-gray-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

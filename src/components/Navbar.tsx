@@ -2,24 +2,15 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { Moon, Search, Sun, LogOut, LayoutDashboard } from "lucide-react";
+import { Moon, Search, Sun, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 const navLinks = [
-    {
-        label: "Home",
-        href: "/",
-    },
-    {
-        label: "Explore",
-        href: "/explore",
-    },
-    {
-        label: "Support",
-        href: "/support",
-    }
+    { label: "Home", href: "/" },
+    { label: "Explore", href: "/explore" },
+    { label: "Support", href: "/support" },
 ];
 
 const Navbar = () => {
@@ -28,6 +19,7 @@ const Navbar = () => {
     const { theme, setTheme } = useTheme();
     const { data: session } = authClient.useSession();
     const [open, setOpen] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
     const menuRef = useRef(null);
 
     useEffect(() => {
@@ -46,16 +38,23 @@ const Navbar = () => {
     };
 
     const user = session?.user;
-    console.log(user)
 
     return (
         <nav className="sticky top-0 left-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-gray-800 dark:bg-black/80">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
                 {/* Left Side */}
-                <div className="flex items-center gap-10">
+                <div className="flex items-center gap-4 md:gap-10">
+                    {/* Mobile menu toggle */}
+                    <button
+                        onClick={() => setMobileOpen(!mobileOpen)}
+                        className="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+                    >
+                        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+
                     <Link
                         href="/"
-                        className="text-2xl font-bold text-black dark:text-white"
+                        className="text-xl font-bold text-black dark:text-white md:text-2xl"
                     >
                         TechStack Pro
                     </Link>
@@ -64,7 +63,6 @@ const Navbar = () => {
                     <div className="hidden items-center gap-8 md:flex">
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href;
-
                             return (
                                 <Link
                                     key={link.href}
@@ -82,7 +80,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Right Side */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     {/* Search */}
                     <button className="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-gray-800">
                         <Search size={20} />
@@ -90,16 +88,10 @@ const Navbar = () => {
 
                     {/* Theme Toggle */}
                     <button
-                        onClick={() =>
-                            setTheme(theme === "dark" ? "light" : "dark")
-                        }
+                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                         className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
                     >
-                        {theme === "dark" ? (
-                            <Sun size={18} />
-                        ) : (
-                            <Moon size={18} />
-                        )}
+                        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
                     </button>
 
                     {/* User Section */}
@@ -147,6 +139,41 @@ const Navbar = () => {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Menu */}
+            {mobileOpen && (
+                <div className="border-t border-gray-200 bg-white px-4 pb-6 pt-4 dark:border-gray-800 dark:bg-black md:hidden">
+                    <div className="flex flex-col gap-3">
+                        {navLinks.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
+                                        isActive
+                                            ? "bg-cyan-500 text-white"
+                                            : "hover:bg-gray-100 dark:hover:bg-zinc-900"
+                                    }`}
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
+
+                        {!user && (
+                            <Link
+                                href="/login"
+                                onClick={() => setMobileOpen(false)}
+                                className="mt-2 rounded-xl bg-black py-3 text-center text-sm font-medium text-white dark:bg-white dark:text-black"
+                            >
+                                Get Started
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };

@@ -7,26 +7,43 @@ import { DiChrome } from "react-icons/di";
 import { BsGithub } from "react-icons/bs";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
+
+const demoUsers = [
+  { label: "Admin", email: "admin@admin.com", password: "Test@test.test12" },
+  { label: "User", email: "rootadmin@company.com", password: "Test@test.test12" },
+];
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [logging, setLogging] = useState<string | null>(null);
+
+  const loginAs = async (user: typeof demoUsers[0]) => {
+    setLogging(user.label);
+    const { error } = await authClient.signIn.email({
+      email: user.email,
+      password: user.password,
+    });
+    setLogging(null);
+    if (error) {
+      alert(error.message);
+    } else {
+      window.location.href = "/";
+    }
+  };
 
   const onSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    // const userData = Object.fromEntries(formData.entries()) as RegisterFormData
     const userData = {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
     };
-    // console.log(userData)
 
-    const { data, error } = await authClient.signIn.email({
+    const { error } = await authClient.signIn.email({
       ...userData
     })
-    if (data) return redirect('/')
     if (error) return alert(error?.message)
+    window.location.href = "/"
   }
 
   return (
@@ -66,9 +83,37 @@ export default function LoginPage() {
               <p className="mt-3 text-gray-500">Login to your account.</p>
             </div>
 
+            {/* Demo Login */}
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-medium">Quick Login</label>
+              <div className="grid grid-cols-2 gap-3">
+                {demoUsers.map((user) => (
+                  <button
+                    key={user.label}
+                    type="button"
+                    disabled={logging !== null}
+                    onClick={() => loginAs(user)}
+                    className="rounded-xl border border-gray-200 py-3 text-sm font-medium transition hover:bg-cyan-50 hover:border-cyan-500 disabled:opacity-50 dark:border-zinc-800 dark:hover:bg-cyan-900/20"
+                  >
+                    {logging === user.label ? "Signing in..." : user.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+              <span className="text-sm text-gray-500">OR</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+            </div>
+
             {/* Social Login */}
             <div className="grid grid-cols-2 gap-4">
-              <button className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 transition hover:bg-gray-100 dark:border-zinc-800 dark:hover:bg-zinc-900">
+              <button
+                onClick={() => authClient.signIn.social({ provider: "google" })}
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 transition hover:bg-gray-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+              >
                 <DiChrome size={18} />
                 Google
               </button>

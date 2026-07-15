@@ -16,6 +16,7 @@ interface Item {
   category?: string;
   rating?: number;
   image?: string;
+  images?: string[];
   tags?: string[];
   createdAt?: string;
 }
@@ -25,6 +26,13 @@ export default function ItemDetails() {
   const [item, setItem] = useState<Item | null>(null);
   const [related, setRelated] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const fallbackImg = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
+  const itemImages = item?.images?.filter(Boolean) ?? [];
+  const allImages = item
+    ? itemImages.length > 0 ? itemImages : (item.image ? [item.image] : [fallbackImg])
+    : [];
 
   useEffect(() => {
     fetch(`/api/items/${id}`)
@@ -89,14 +97,42 @@ export default function ItemDetails() {
 
       {/* Main card */}
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        {item.image && (
-          <div className="relative h-72 w-full">
-            <Image
-              src={item.image}
-              alt={item.title}
-              fill
-              className="object-cover"
-            />
+        {/* Image Gallery */}
+        {allImages.length > 0 && (
+          <div className="border-b border-gray-200 dark:border-zinc-800">
+            {/* Main image */}
+            <div className="relative h-72 w-full md:h-96">
+              <Image
+                src={allImages[selectedImage]}
+                alt={item.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            {/* Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto px-4 py-3">
+                {allImages.map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                      i === selectedImage
+                        ? "border-cyan-500"
+                        : "border-transparent opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <Image
+                      src={url}
+                      alt={`${item.title} ${i + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -253,7 +289,7 @@ export default function ItemDetails() {
                 id={r._id}
                 title={r.title}
                 description={r.shortDescription || r.fullDescription || ""}
-                image={r.image || ""}
+                image={(r.images?.[0] || r.image) || ""}
                 rating={r.rating || 0}
                 price={`$${r.price}`}
               />

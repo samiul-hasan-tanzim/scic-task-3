@@ -59,7 +59,7 @@ export default function ExploreHeader({
         </select>
 
         {/* Grid toggle */}
-        <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200 transition hover:bg-gray-100 dark:border-zinc-700 dark:hover:bg-zinc-900">
+        <button className="hidden md:flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200 transition hover:bg-gray-100 dark:border-zinc-700 dark:hover:bg-zinc-900">
           <LayoutGrid size={20} />
         </button>
       </div>

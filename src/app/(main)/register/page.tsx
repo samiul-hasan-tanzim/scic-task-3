@@ -7,7 +7,6 @@ import { DiChrome } from "react-icons/di";
 import { BsGithub } from "react-icons/bs";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
 
 
 // type RegisterFormData = {
@@ -30,11 +29,11 @@ export default function RegisterPage() {
             password: formData.get("password") as string,
         };
 
-        const { data, error } = await authClient.signUp.email({
+        const { error } = await authClient.signUp.email({
             ...userData
         })
-        if (data) return redirect('/')
         if (error) return alert(error?.message)
+        window.location.href = "/"
     };
 
 
@@ -76,7 +75,10 @@ export default function RegisterPage() {
 
                         {/* Social Login */}
                         <div className="grid grid-cols-2 gap-4">
-                            <button className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 transition hover:bg-gray-100 dark:border-zinc-800 dark:hover:bg-zinc-900">
+                            <button
+                                onClick={() => authClient.signIn.social({ provider: "google" })}
+                                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 transition hover:bg-gray-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                            >
                                 <DiChrome size={18} />
                                 Google
                             </button>
@@ -138,7 +140,7 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
-                            <button className="w-full rounded-xl bg-cyan-500 py-3 font-semibold text-white transition hover:bg-cyan-600">
+                            <button type="submit" className="w-full rounded-xl bg-cyan-500 py-3 font-semibold text-white transition hover:bg-cyan-600">
                                 Create Account
                             </button>
                         </form>

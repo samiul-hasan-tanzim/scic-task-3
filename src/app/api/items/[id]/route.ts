@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDb } from "@/lib/db";
 import { ObjectId } from "mongodb";
+import { auth } from "@/lib/auth";
 
 export async function GET(_: NextRequest, { params }: any) {
   const { id } = await params;
@@ -17,6 +18,11 @@ export async function GET(_: NextRequest, { params }: any) {
 }
 
 export async function PUT(req: NextRequest, { params }: any) {
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const db = await connectToDb();
   const body = await req.json();
@@ -34,7 +40,12 @@ export async function PUT(req: NextRequest, { params }: any) {
   return NextResponse.json(result);
 }
 
-export async function DELETE(_: NextRequest, { params }: any) {
+export async function DELETE(req: NextRequest, { params }: any) {
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const db = await connectToDb();
   const result = await db.collection("items").deleteOne({

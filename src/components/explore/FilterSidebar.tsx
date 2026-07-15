@@ -20,6 +20,7 @@ export default function FilterSidebar({
   onReleaseDateChange,
   onTagsChange,
   onReset,
+  className = "",
 }: {
   selectedCategories: string[];
   priceRange: number;
@@ -30,6 +31,7 @@ export default function FilterSidebar({
   onReleaseDateChange: (v: string) => void;
   onTagsChange: (v: string[]) => void;
   onReset: () => void;
+  className?: string;
 }) {
   const toggleCategory = (cat: string) => {
     if (selectedCategories.includes(cat)) {
@@ -48,7 +50,7 @@ export default function FilterSidebar({
   };
 
   return (
-    <aside className="sticky top-20 hidden h-[calc(100vh-6rem)] w-72 shrink-0 overflow-y-auto border-r border-gray-200 pr-6 dark:border-zinc-800 lg:block">
+    <aside className={`sticky top-20 h-[calc(100vh-6rem)] w-72 shrink-0 overflow-y-auto border-r border-gray-200 pr-6 dark:border-zinc-800 ${className}`}>
       {/* Popular Tags */}
       <div className="mb-10">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">
@@ -62,11 +64,10 @@ export default function FilterSidebar({
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  active
-                    ? "border-cyan-500 bg-cyan-500 text-white"
-                    : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
-                }`}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active
+                  ? "border-cyan-500 bg-cyan-500 text-white"
+                  : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
+                  }`}
               >
                 {tag}
               </button>
@@ -121,24 +122,6 @@ export default function FilterSidebar({
             <span>$0</span>
             <span>$1000+</span>
           </div>
-        </div>
-
-        {/* Release */}
-        <div>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">
-            Release Date
-          </h3>
-
-          <select
-            value={releaseDate}
-            onChange={(e) => onReleaseDateChange(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-transparent p-3 dark:border-zinc-700"
-          >
-            <option value="30">Last 30 days</option>
-            <option value="180">Last 6 months</option>
-            <option value="365">Last year</option>
-            <option value="all">All time</option>
-          </select>
         </div>
 
         {/* Reset */}
