@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
+import { POPULAR_TAGS } from "@/lib/constants";
 
 export default function ManageItems() {
   const [items, setItems] = useState<any[]>([]);
@@ -41,11 +42,21 @@ export default function ManageItems() {
       price: item.price || "",
       category: item.category || "",
       image: item.image || "",
+      tags: [...(item.tags || [])],
     });
   };
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const toggleEditTag = (tag: string) => {
+    setForm({
+      ...form,
+      tags: form.tags.includes(tag)
+        ? form.tags.filter((t: string) => t !== tag)
+        : [...form.tags, tag],
+    });
   };
 
   const saveEdit = async (id: string) => {
@@ -103,6 +114,7 @@ export default function ManageItems() {
               <tr>
                 <th className="px-6 py-4 font-medium">Title</th>
                 <th className="px-6 py-4 font-medium">Category</th>
+                <th className="px-6 py-4 font-medium">Tags</th>
                 <th className="px-6 py-4 font-medium">Price</th>
                 <th className="px-6 py-4 font-medium">Actions</th>
               </tr>
@@ -140,6 +152,40 @@ export default function ManageItems() {
                       <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
                         {item.category || "General"}
                       </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {editItem === item._id ? (
+                      <div className="flex flex-wrap gap-1">
+                        {POPULAR_TAGS.map((tag) => {
+                          const active = form.tags.includes(tag);
+                          return (
+                            <button
+                              type="button"
+                              key={tag}
+                              onClick={() => toggleEditTag(tag)}
+                              className={`rounded-full border px-2 py-0.5 text-xs font-medium transition ${
+                                active
+                                  ? "border-cyan-500 bg-cyan-500 text-white"
+                                  : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {(item.tags || []).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-zinc-800 dark:text-gray-400"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4">

@@ -8,22 +8,22 @@ import { FaGithub } from "react-icons/fa6";
 
 const footerLinks = {
     Product: [
-        "Features",
-        "Integrations",
-        "Pricing",
-        "Changelog",
+        { label: "Features", href: "/#features" },
+        { label: "Explore", href: "/explore" },
+        { label: "Pricing", href: "/#pricing" },
+        { label: "Integrations", href: "/#integrations" },
     ],
     Company: [
-        "About",
-        "Careers",
-        "Blog",
-        "Contact",
+        { label: "About", href: "/#about" },
+        { label: "Blog", href: "/#blog" },
+        { label: "Support", href: "/support" },
+        { label: "Contact", href: "/support" },
     ],
     Resources: [
-        "Documentation",
-        "Help Center",
-        "Community",
-        "API Reference",
+        { label: "Documentation", href: "/support" },
+        { label: "Help Center", href: "/support" },
+        { label: "API Reference", href: "/support" },
+        { label: "Privacy", href: "/support" },
     ],
 };
 
@@ -50,27 +50,33 @@ const Footer = () => {
                         {/* Social */}
                         <div className="mt-8 flex items-center gap-4">
                             {[
-                                FaGithub,
-                                BsTwitter,
-                                FaLinkedin,
-                            ].map((Icon, index) => (
-                                <button
-                                    key={index}
-                                    className="
-                    rounded-xl
-                    border
-                    border-gray-200
-                    p-3
-                    transition
-                    hover:-translate-y-1
-                    hover:border-cyan-500
-                    hover:text-cyan-500
-                    dark:border-gray-800
-                  "
-                                >
-                                    <Icon size={20} />
-                                </button>
-                            ))}
+                                { icon: FaGithub, href: "https://github.com" },
+                                { icon: BsTwitter, href: "https://twitter.com" },
+                                { icon: FaLinkedin, href: "https://linkedin.com" },
+                            ].map((s, i) => {
+                                const Icon = s.icon;
+                                return (
+                                    <a
+                                        key={i}
+                                        href={s.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="
+                      rounded-xl
+                      border
+                      border-gray-200
+                      p-3
+                      transition
+                      hover:-translate-y-1
+                      hover:border-cyan-500
+                      hover:text-cyan-500
+                      dark:border-gray-800
+                    "
+                                    >
+                                        <Icon size={20} />
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -84,9 +90,9 @@ const Footer = () => {
 
                                 <ul className="space-y-4">
                                     {links.map((link) => (
-                                        <li key={link}>
+                                        <li key={link.label}>
                                             <Link
-                                                href="/"
+                                                href={link.href}
                                                 className="
                           text-gray-600
                           transition
@@ -94,7 +100,7 @@ const Footer = () => {
                           dark:text-gray-300
                         "
                                             >
-                                                {link}
+                                                {link.label}
                                             </Link>
                                         </li>
                                     ))}
@@ -102,6 +108,16 @@ const Footer = () => {
                             </div>
                         )
                     )}
+
+                    {/* Contact */}
+                    <div>
+                        <h3 className="mb-6 font-semibold">Contact</h3>
+                        <ul className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                            <li>hello@techstackpro.com</li>
+                            <li>San Francisco, CA</li>
+                            <li>Mon–Fri 9AM–6PM PST</li>
+                        </ul>
+                    </div>
                 </div>
 
                 {/* Newsletter */}
@@ -188,21 +204,21 @@ const Footer = () => {
 
                     <div className="flex gap-6">
                         <Link
-                            href="/"
+                            href="/support"
                             className="hover:text-cyan-500"
                         >
                             Privacy Policy
                         </Link>
 
                         <Link
-                            href="/"
+                            href="/support"
                             className="hover:text-cyan-500"
                         >
                             Terms of Service
                         </Link>
 
                         <Link
-                            href="/"
+                            href="/support"
                             className="hover:text-cyan-500"
                         >
                             Cookies

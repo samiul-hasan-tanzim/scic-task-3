@@ -1,0 +1,10 @@
+# Missing Items (Req.md Audit)
+
+- [ ] **1. Chart library** — Install Recharts or Chart.js (§1 Technology Stack)
+- [ ] **2. Home page sections** — Add 3+ more sections to reach minimum 7 (e.g. Testimonials, FAQ, Newsletter, CTA) (§3)
+- [ ] **3. Demo login button** — Add auto-fill credentials button on login page (§7)
+- [ ] **4. Social login buttons** — Wire up Google/GitHub buttons on login and register pages (§7)
+- [ ] **5. API route protection** — Add auth checks to `POST /api/items`, `PUT /api/items/[id]`, `DELETE /api/items/[id]` (§8/§9)
+- [ ] **6. Forgot password page** — Create route at `/forgot-password` (§7)
+- [ ] **7. Inline validation** — Replace `alert()` calls with proper form validation UI on login/register (§7)
+- [ ] **8. Register button type** — Add `type="submit"` to "Create Account" button on register page (§7)

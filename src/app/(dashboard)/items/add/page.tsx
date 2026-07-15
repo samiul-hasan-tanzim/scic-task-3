@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { POPULAR_TAGS } from "@/lib/constants";
 
 export default function AddItem() {
   const router = useRouter();
@@ -12,11 +13,21 @@ export default function AddItem() {
     price: "",
     category: "",
     image: "",
+    tags: [] as string[],
   });
   const [saving, setSaving] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const toggleTag = (tag: string) => {
+    setForm({
+      ...form,
+      tags: form.tags.includes(tag)
+        ? form.tags.filter((t) => t !== tag)
+        : [...form.tags, tag],
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,6 +136,29 @@ export default function AddItem() {
             onChange={handleChange}
             className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-500 dark:border-gray-700 dark:bg-zinc-950"
           />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Tags</label>
+          <div className="flex flex-wrap gap-2">
+            {POPULAR_TAGS.map((tag) => {
+              const active = form.tags.includes(tag);
+              return (
+                <button
+                  type="button"
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    active
+                      ? "border-cyan-500 bg-cyan-500 text-white"
+                      : "border-gray-200 hover:border-cyan-500 hover:text-cyan-500 dark:border-zinc-700 dark:hover:border-cyan-500"
+                  }`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <button
